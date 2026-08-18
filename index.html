@@ -621,6 +621,7 @@ function movingAvg(points, win) {
 }
 
 function table(container, cols, rows, foot) {
+  if (!container) return;
   const t = el("table");
   const thead = el("thead");
   const tr = el("tr");
@@ -663,6 +664,7 @@ function normalize01(pts) {
 
 function timeChart(host, opts) {
   const box = typeof host === "string" ? document.getElementById(host) : host;
+  if (!box) return;
   box.replaceChildren();
   let series = (opts.series || []).filter(s => s.points && s.points.length);
   if (opts.normalize) {
@@ -788,6 +790,7 @@ function timeChart(host, opts) {
 /** Horizontal stacked bars — one row per plan, segments = macros. */
 function stackedMacros(hostId, plans) {
   const box = document.getElementById(hostId);
+  if (!box) return;
   box.replaceChildren();
   const W = Math.max(320, Math.round(box.clientWidth || 760));
   const rowH = 46, H = plans.length * rowH + 16;
@@ -844,6 +847,7 @@ function stackedMacros(hostId, plans) {
 
 function legend(hostId, items) {
   const box = document.getElementById(hostId);
+  if (!box) return;
   box.replaceChildren(...items.map(([name, color]) => {
     const s = el("span");
     s.appendChild(el("i", "swatch")).style.background = color;
@@ -980,6 +984,7 @@ function liveAlerts() {
                      ". " + (wk != null && Math.abs(wk) < 0.15
                        ? "Peso também estável: deload ou +150 kcal."
                        : "Se o peso ainda cai, manter carga já é vitória — não force.") });
+  }
   if (stalled.length >= 1 && stalled.length < 3 && wk != null && Math.abs(wk) < 0.2 && allLifts().length >= 4) {
     out.push({ level: "warn", title: "Cargas paradas e peso estável",
                body: "Sinal clássico de deload ou ajuste de calorias. Uma semana a 60% das séries, mesma carga." });
@@ -1835,7 +1840,7 @@ function renderTreino() {
   const hasLifts = day.exercises && day.exercises.length;
   document.getElementById("t-actions").hidden = !hasLifts;
   document.getElementById("t-hint").hidden = !hasLifts;
-  day.exercises.forEach((ex, xi) => {
+  (day.exercises || []).forEach((ex, xi) => {
     const card = el("div", "exercise");
     const head = el("div", "ex-head");
     head.appendChild(el("div", "ex-name", ex.name));
@@ -2161,8 +2166,10 @@ document.querySelectorAll("nav.tabs button").forEach(b => {
 window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
 
 function redrawAll() {
-  renderEvolucao(); renderRoutine(); renderDieta(); renderReceitas();
-  renderTreino(); renderSupps(); renderRecovery(); renderInsights();
+  [renderEvolucao, renderRoutine, renderDieta, renderReceitas,
+   renderTreino, renderSupps, renderRecovery, renderInsights].forEach(fn => {
+    try { fn(); } catch (err) { console.error(fn.name, err); }
+  });
 }
 
 const today = iso(new Date());
